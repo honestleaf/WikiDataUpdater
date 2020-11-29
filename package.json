@@ -1,0 +1,17 @@
+{
+  "name": "monkeyscripts",
+  "version": "1.0.0",
+  "description": "",
+  "dependencies": {},
+  "devDependencies": {
+    "eslint": "^6.5.1",
+    "eslint-config-es3": "^1.0.0",
+    "eslint-config-google": "^0.14.0",
+    "eslint-plugin-vue": "^5.2.3"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC"
+}

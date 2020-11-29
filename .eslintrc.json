@@ -1,0 +1,20 @@
+{
+  "env": {
+    "browser": true,
+    "jquery": true
+  },
+  "extends": ["es3"],
+  "globals": {
+    "Atomics": "readonly",
+    "SharedArrayBuffer": "readonly",
+    "mediaWiki": "readonly",
+    "jQuery": "readonly",
+    "RLQ": "readonly",
+    "Vue": "readonly"
+  },
+  "parserOptions": {
+    "ecmaVersion": 3
+  },
+  "plugins": ["vue"],
+  "rules": {}
+}
