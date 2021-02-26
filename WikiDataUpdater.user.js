@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name WikiDataUpdater
 // @namespace Violentmonkey Scripts
-// @match http*://warframe.huijiwiki.com/wiki/warframe%E4%B8%AD%E6%96%87%E7%BB%B4%E5%9F%BA:%E6%B2%99%E7%9B%92
+// @match http*://warframe.huijiwiki.com/wiki/warframe%E4%B8%AD%E6%96%87%E7%BB%B4%E5%9F%BA:%E6%95%B0%E6%8D%AE%E6%94%AF%E6%8C%81
 // @grant none
 // @run-at document-idle
 // @noframes
@@ -20,6 +20,7 @@
     'Module:Ability/Conclave/data',
     'Module:Arcane/data',
     'Module:Missions/data',
+    'Module:Modular/data',
     'Module:Stances/data'
   ];
   var droptableUpdateJobs = [
@@ -141,23 +142,23 @@
   var chanceRegex = /([0-9.]+)%/;
   var bountyTierRegex = /Level .+/;
   var bountyCompletionRegex = /(.+?) Completion(s|)/;
-
+ 
   function Logger(logScroll, logStatus, logScrollSelector) {
     this.logScroll = logScroll;
     this.logStatus = logStatus;
     this.logScrollSelector = logScrollSelector;
   }
-
+ 
   Logger.prototype.log = function (text) {
     this.logScroll.list.push(text);
     this.logStatus.progressText = text;
   };
-
+ 
   Logger.prototype.clear = function () {
     this.logScroll.list = [];
     this.logStatus.progressText = '';
   };
-
+ 
   mw.loader.using('ext.gadget.Vue').then(
     function () {
       init();
@@ -166,7 +167,7 @@
       console.log('Vue module failed to load');
     }
   );
-
+ 
   function init() {
     var wikiaProgress = {};
     wikiaProgress.desc = new Vue({
@@ -326,7 +327,7 @@
         }
       }
     });
-
+ 
     if (editToken === '+\\') {
       wikiaProgress.label.progressText = '未注册用户无法使用该功能！';
       wikiaProgress.control.cssClass.disable = true;
@@ -334,13 +335,13 @@
       droptableProgress.control.cssClass.disable = true;
     }
   }
-
+ 
   function updateWikiaData(label, progress, control, logger) {
     logger.clear();
     control.cssClass.disable = true;
     progress.widthNum = 0;
     logger.log('发送请求……');
-
+ 
     $.ajax({
       url: wikiaUrl,
       type: 'GET',
@@ -350,7 +351,8 @@
         prop: 'revisions',
         titles: wikiaUpdateJobs.join('|'),
         formatversion: '2',
-        rvprop: 'timestamp|user|content'
+        rvprop: 'timestamp|user|content',
+        rvslots: 'main'
       },
       dataType: 'jsonp',
       timeout: 10000,
@@ -364,7 +366,7 @@
         for (var i = 0; i < keys.length; i++) {
           editData.push({
             title: data.query.pages[keys[i]].title,
-            content: data.query.pages[keys[i]].revisions[0]['*']
+            content: data.query.pages[keys[i]].revisions[0]['slots']['main']['content']
           });
         }
         pushUpdateDate(editData, 'Template:RewardTableUpdateDate');
@@ -375,13 +377,13 @@
         logger.log('发送请求过程中出现异常：' + status);
       });
   }
-
+ 
   function updateDroptableData(label, progress, control, logger) {
     logger.clear();
     control.cssClass.disable = true;
     progress.widthNum = 0;
     logger.log('获取掉落数据……');
-
+ 
     fetch(corsProxy + droptableUrl, {
       method: 'get',
       mode: 'cors'
@@ -409,7 +411,7 @@
         }
       );
   }
-
+ 
   function droptableJobs(data, label, progress, control, logger) {
     logger.log('开始解析数据……');
     var subJob, rowsData;
@@ -431,7 +433,7 @@
     progress.widthNum += 10;
     batchPageEdit(droptableData, label, progress, control, 80, logger);
   }
-
+ 
   function pushUpdateDate(jobList, pageTitle) {
     jobList.push({
       title: pageTitle,
@@ -439,7 +441,7 @@
         '{{subst:CURRENTYEAR}}年{{subst:CURRENTMONTH1}}月{{subst:CURRENTDAY}}日'
     });
   }
-
+ 
   function missionRewardsBuilder($originTable, rowsData) {
     var rotation = 'All';
     var planet, node, mtype, reward, chance, $thRow, matched;
@@ -482,7 +484,7 @@
       }
     });
   }
-
+ 
   function cetusRewardsBuilder($originTable, rowsData) {
     var planet = 'Earth';
     var mtype = 'Bounty';
@@ -527,11 +529,11 @@
       }
     });
   }
-
+ 
   function deimosRewardsBuilder($originTable, rowsData) {
     solarisRewardsBuilder($originTable, rowsData, 'Deimos');
   }
-
+ 
   function solarisRewardsBuilder($originTable, rowsData, nPlanet) {
     var planet;
     if (nPlanet !== undefined) {
@@ -598,14 +600,14 @@
       }
     });
   }
-
+ 
   function sortieRewardsBuilder($originTable, rowsData) {
     var planet = 'Any';
     var mtype = 'Any';
     var rotation = 'All';
     var node = 'Sortie';
     var reward, chance;
-
+ 
     $originTable.find('tr').each(function () {
       $(this)
         .children('td')
@@ -624,7 +626,7 @@
         });
     });
   }
-
+ 
   function transientRewardsBuilder($originTable, rowsData) {
     var dupFilter = {};
     var rotation = 'All';
@@ -678,7 +680,7 @@
       }
     });
   }
-
+ 
   function keyRewardsBuilder($originTable, rowsData) {
     var dupFilter = {
       'Orokin Derelict Assassinate': true,
@@ -737,7 +739,7 @@
       }
     });
   }
-
+ 
   function missionDropBuilder(rowsData) {
     var missionDropTemplate = {
       license: 'CC0-1.0',
@@ -797,7 +799,7 @@
     missionDropTemplate.data = rowsData;
     return missionDropTemplate;
   }
-
+ 
   function enemyDropTablesBuilder($originTable, rowsData) {
     rowsData.headers = [
       'enemyName',
@@ -863,7 +865,7 @@
       }
     }
   }
-
+ 
   function rewardDropTablesBuilder($originTable, rowsData) {
     rowsData.headers = [
       'modName',
@@ -938,7 +940,7 @@
       }
     }
   }
-
+ 
   function itemDropBuilder(rowsData) {
     var itemDropTemplate = {
       license: 'CC0-1.0',
@@ -967,7 +969,7 @@
     itemDropTemplate.data = rowsData;
     return itemDropTemplate;
   }
-
+ 
   function fieldBuilder(name) {
     var strippedName = name.replace(/[[\].]/g, '');
     var field = {
@@ -979,7 +981,7 @@
     };
     return field;
   }
-
+ 
   /* data = [ {title: '...', content: '...'}, ... ] */
   function batchPageEdit(data, label, progress, control, step, logger) {
     var lastPromise = $.when();
@@ -1008,7 +1010,7 @@
       }
     );
   }
-
+ 
   function getPageEditPromise(
     pageTitle,
     pageContent,
